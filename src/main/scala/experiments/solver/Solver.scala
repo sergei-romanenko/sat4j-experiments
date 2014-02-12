@@ -1,4 +1,4 @@
-package sat4jSamples
+package experiments.solver
 
 import org.sat4j.specs._
 import org.sat4j.minisat.SolverFactory
