@@ -57,6 +57,12 @@ object RunSolver {
     models.toList
   }
 
+  def getAllModelsAsLists(
+    MAXVAR: Int, clauses: Array[Array[Int]]): List[List[Int]] = {
+
+    getAllModels(MAXVAR, clauses).map(c => c.toList)
+  }
+
   def main(args: Array[String]) {
 
     val solver: ISolver = SolverFactory.newDefault()
