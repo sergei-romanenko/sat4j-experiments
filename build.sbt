@@ -1,10 +1,10 @@
-name := "sat4jSamples"
+name := "Sat4jExperiments"
 
 version := "1.0-SNAPSHOT"
 
 scalaVersion := "2.10.3"
 
-libraryDependencies += "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5" withJavadoc()
+libraryDependencies += "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5" withSources() withJavadoc()
 
 //libraryDependencies += "org.specs2" % "specs2_2.10" % "2.3.6" withJavadoc()
 

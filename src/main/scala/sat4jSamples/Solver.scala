@@ -5,8 +5,29 @@ import org.sat4j.minisat.SolverFactory
 import org.sat4j.tools.ModelIterator
 import org.sat4j.core.VecInt
 
-//import scala.collection.mutable
-//import scala.collection.Arrays
+case class SATModelIterator(solver: ISolver)
+  extends Iterator[Array[Int]] {
+
+  private val mi: ModelIterator = new ModelIterator(solver);
+  private val problem: IProblem = mi
+  private var ready = false
+  private var isSatisfiable = false
+
+  def hasNext: Boolean = {
+    if (!ready) {
+      isSatisfiable = problem.isSatisfiable()
+      ready = true
+    }
+    isSatisfiable
+  }
+
+  def next(): Array[Int] = {
+    if (!hasNext) throw new NoSuchElementException("UNSAT")
+    val model: Array[Int] = problem.model();
+    ready = false
+    model
+  }
+}
 
 object RunSolver {
 
@@ -16,7 +37,6 @@ object RunSolver {
     //val NBCLAUSES: Int = 3;
 
     val solver: ISolver = SolverFactory.newDefault()
-    val mi: ModelIterator = new ModelIterator(solver);
     solver.setTimeout(3600); // 1 hour timeout
 
     // Prepare the solver to accept MAXVAR variables. MANDATORY.
@@ -46,34 +66,19 @@ object RunSolver {
 
     // We are done. Working now on the IProblem interface.
 
-    var unsat: Boolean = true
+    var models = SATModelIterator(solver)
 
-    val problem: IProblem = mi
-    while (problem.isSatisfiable()) {
-      unsat = false;
-      val model: Array[Int] = problem.model();
-      printf("SAT! ")
-      for (x <- model) {
-        print(x.toString() + " ")
+    if (models.hasNext) {
+
+      for (model <- models) {
+        printf("SAT! ")
+        for (x <- model) {
+          print(x.toString() + " ")
+        }
+        println()
       }
-      println()
-    }
-    if (unsat)
+    } else {
       printf("UNSAT!")
-
-    //    val problem: IProblem = solver
-    //    if (problem.isSatisfiable()) {
-    //      val model: Array[Int] = problem.model();
-    //      printf("SAT!")
-    //      for (x <- model) {
-    //        print(x.toString() + " ")
-    //      }
-    //      println()
-    //    } else
-    //      printf("UNSAT!")
-
-    // A solution.
-    // 1 2 -3 4 5
+    }
   }
-
 }
