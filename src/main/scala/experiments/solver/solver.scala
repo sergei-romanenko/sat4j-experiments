@@ -31,16 +31,17 @@ case class SATModelIterator(solver: ISolver)
 
 object RunSolver {
 
-  def main(args: Array[String]) {
-
-    val MAXVAR: Int = 5;
-    //val NBCLAUSES: Int = 3;
+  def getAllModels(MAXVAR: Int, clauses: Array[Array[Int]]): List[Array[Int]] = {
 
     val solver: ISolver = SolverFactory.newDefault()
+
     solver.setTimeout(3600); // 1 hour timeout
 
     // Prepare the solver to accept MAXVAR variables. MANDATORY.
     solver.newVar(MAXVAR)
+
+    // Not mandatory for SAT solving. MANDATORY for MAXSAT solving.
+    solver.setExpectedNumberOfClauses(clauses.size)
 
     // Feed the solver using Dimacs format , using arrays of int
     // ( best option to avoid dependencies on SAT4J IVecInt )
@@ -49,36 +50,36 @@ object RunSolver {
     // only integer ( positive or negative )
     // with absolute values less or equal to MAXVAR.
 
-    // (x1 | -x5 | x4) &
-    // (-x1 | x5 | x3 | x4) &
-    // (-x3 | x4).
-
-    val clauses = Array(
-      Array(1, -5, 4),
-      Array(-1, 5, 3, 4),
-      Array(-3, 4))
-
-    // Not mandatory for SAT solving. MANDATORY for MAXSAT solving.
-    //solver.setExpectedNumberOfClauses(clauses.size)
-
     // adapt Array to IVecInt
     clauses.foreach(clause => solver.addClause(new VecInt(clause)))
 
-    // We are done. Working now on the IProblem interface.
-
     var models = SATModelIterator(solver)
+    models.toList
+  }
 
-    if (models.hasNext) {
+  def main(args: Array[String]) {
 
+    val solver: ISolver = SolverFactory.newDefault()
+    solver.setTimeout(1); // 1 sec timeout
+
+    // (x1 | -x2) & (x2 | -x1)
+
+    val clauses = Array(
+      Array(1, -2),
+      Array(2, -1))
+
+    var models = getAllModels(2, clauses)
+
+    if (models.isEmpty) {
+      printf("UNSAT!")
+    } else {
+      println("SAT!")
       for (model <- models) {
-        printf("SAT! ")
         for (x <- model) {
           print(x.toString() + " ")
         }
         println()
       }
-    } else {
-      printf("UNSAT!")
     }
   }
 }
