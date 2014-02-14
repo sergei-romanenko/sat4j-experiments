@@ -31,7 +31,7 @@ case class SATModelIterator(solver: ISolver)
 
 object RunSolver {
 
-  def getAllModels(MAXVAR: Int, clauses: Array[Array[Int]]): List[Array[Int]] = {
+  def getAllModels(MAXVAR: Int, clauses: Seq[IndexedSeq[Int]]): List[Array[Int]] = {
 
     val solver: ISolver = SolverFactory.newDefault()
 
@@ -51,14 +51,14 @@ object RunSolver {
     // with absolute values less or equal to MAXVAR.
 
     // adapt Array to IVecInt
-    clauses.foreach(clause => solver.addClause(new VecInt(clause)))
+    clauses.foreach(clause => solver.addClause(new VecInt(clause.toArray)))
 
     var models = SATModelIterator(solver)
     models.toList
   }
 
   def getAllModelsAsLists(
-    MAXVAR: Int, clauses: Array[Array[Int]]): List[List[Int]] = {
+    MAXVAR: Int, clauses: Seq[IndexedSeq[Int]]): List[List[Int]] = {
 
     getAllModels(MAXVAR, clauses).map(c => c.toList)
   }
@@ -70,9 +70,9 @@ object RunSolver {
 
     // (x1 | -x2) & (x2 | -x1)
 
-    val clauses = Array(
-      Array(1, -2),
-      Array(2, -1))
+    val clauses = List(
+      Vector(1, -2),
+      Vector(2, -1))
 
     var models = getAllModels(2, clauses)
 
