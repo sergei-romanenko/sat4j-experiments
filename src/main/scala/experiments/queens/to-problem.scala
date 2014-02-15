@@ -1,5 +1,7 @@
 package experiments.queens
 
+import experiments.solver._
+
 //x00 x01 x02 x03     1  2  3  4
 //x10 x11 x12 x13     5  6  7  8
 //x20 x21 x22 x23     9 10 11 12
@@ -7,7 +9,7 @@ package experiments.queens
 
 // x_i_j is true iff there is a queen at x_i_j.
 
-case class ProblemBuilder(n: Int) {
+case class SATProblemBuilder(n: Int) {
 
   def varFromSq(i: Int, j: Int): Int = {
     n * i + j + 1
@@ -32,18 +34,18 @@ case class ProblemBuilder(n: Int) {
   }
 
   // There is at least one queen per row.
-  def atLeastOnePerRow(i: Int): IndexedSeq[Lit] =
-    for (j <- 0 to n - 1) yield P(i, j)
+  def atLeastOnePerRow(i: Int): Vector[Lit] =
+    for (j <- Vector.range(0, n)) yield P(i, j)
 
   // There is at least one queen per column.
 
-  def atLeastOnePerCol(j: Int): IndexedSeq[Lit] =
-    for (i <- 0 to n - 1) yield P(i, j)
+  def atLeastOnePerCol(j: Int): Vector[Lit] =
+    for (i <- Vector.range(0, n)) yield P(i, j)
 
   // There is no more than one queen per row:
   //     x_i_j implies -x_i_k, if j /= k  
 
-  def atMostOnePerRow(i: Int, j: Int): Seq[IndexedSeq[Lit]] = {
+  def atMostOnePerRow(i: Int, j: Int): Seq[Vector[Lit]] = {
     for (k <- 1 to n - 1 - j)
       yield Vector(N(i, j), N(i, j + k))
   }
@@ -51,29 +53,29 @@ case class ProblemBuilder(n: Int) {
   // There is no more than one queen per column:
   //     x_i_j implies -x_k_j, if i /= k  
 
-  def atMostOnePerCol(i: Int, j: Int): Seq[IndexedSeq[Lit]] = {
+  def atMostOnePerCol(i: Int, j: Int): Seq[Vector[Lit]] = {
     for (k <- 1 to n - 1 - i)
       yield Vector(N(i, j), N(i + k, j))
   }
 
-  def atMostOnePerDiag1(i: Int, j: Int): Seq[IndexedSeq[Lit]] = {
+  def atMostOnePerDiag1(i: Int, j: Int): Seq[Vector[Lit]] = {
     for (k <- 1 to n - 1 - j; if i + k < n)
       yield Vector(N(i, j), N(i + k, j + k))
   }
 
-  def atMostOnePerDiag2(i: Int, j: Int): Seq[IndexedSeq[Lit]] = {
+  def atMostOnePerDiag2(i: Int, j: Int): Seq[Vector[Lit]] = {
     for (k <- 1 to n - 1 - j; if i - k >= 0)
       yield Vector(N(i, j), N(i - k, j + k))
   }
 
-  def buildProblem(): Seq[IndexedSeq[Int]] = {
-    val clauses = new collection.mutable.ListBuffer[IndexedSeq[Lit]]()
+  def buildSATProblem(): List[Vector[Int]] = {
+    val clauses = new collection.mutable.ListBuffer[Vector[Lit]]()
 
-    def appendClause(c: IndexedSeq[Lit]) {
+    def appendClause(c: Vector[Lit]) {
       clauses += c
     }
 
-    def append(cs: Seq[IndexedSeq[Lit]]) {
+    def append(cs: Seq[Vector[Lit]]) {
       for (c <- cs) appendClause(c)
     }
 
@@ -89,11 +91,26 @@ case class ProblemBuilder(n: Int) {
       append(atMostOnePerDiag1(i, j))
       append(atMostOnePerDiag2(i, j))
     }
-    var problem : Seq[IndexedSeq[Int]] =
-      for (c <- clauses) yield
-        for (l <- c) yield l.toVar
-    problem
+
+    val problem: Seq[Vector[Int]] =
+      for (c <- clauses) yield for (l <- c) yield l.toVar
+
+    problem.toList
   }
 
-  // There is one and only one queen per row and per column
+}
+
+case class QSolver(n: Int, timeout: Int = 10) {
+
+  val builder = SATProblemBuilder(n)
+
+  def decodeSolution(s: Vector[Int]): Vector[Sq] =
+    for (l <- s; if l > 0) yield builder.sqFromVar(l)
+
+  def getSolutions(): List[Vector[Sq]] = {
+    val sat_problem = builder.buildSATProblem()
+    val sat_solutions = SATSolver.getAllModels(n * n, sat_problem)
+
+    for (s <- sat_solutions) yield decodeSolution(s)
+  }
 }

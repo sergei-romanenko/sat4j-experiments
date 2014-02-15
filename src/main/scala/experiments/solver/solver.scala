@@ -6,7 +6,7 @@ import org.sat4j.tools.ModelIterator
 import org.sat4j.core.VecInt
 
 case class SATModelIterator(solver: ISolver)
-  extends Iterator[Array[Int]] {
+  extends Iterator[Vector[Int]] {
 
   private val mi: ModelIterator = new ModelIterator(solver);
   private val problem: IProblem = mi
@@ -21,24 +21,27 @@ case class SATModelIterator(solver: ISolver)
     isSatisfiable
   }
 
-  def next(): Array[Int] = {
+  def next(): Vector[Int] = {
     if (!hasNext) throw new NoSuchElementException("UNSAT")
     val model: Array[Int] = problem.model();
     ready = false
-    model
+    model.toVector
   }
 }
 
-object RunSolver {
+object SATSolver {
 
-  def getAllModels(MAXVAR: Int, clauses: Seq[IndexedSeq[Int]]): List[Array[Int]] = {
+  def getModelIterator(
+    maxvar: Int,
+    clauses: List[Vector[Int]],
+    timeout: Int = 10): SATModelIterator = {
 
     val solver: ISolver = SolverFactory.newDefault()
 
-    solver.setTimeout(3600); // 1 hour timeout
+    solver.setTimeout(timeout)
 
     // Prepare the solver to accept MAXVAR variables. MANDATORY.
-    solver.newVar(MAXVAR)
+    solver.newVar(maxvar)
 
     // Not mandatory for SAT solving. MANDATORY for MAXSAT solving.
     solver.setExpectedNumberOfClauses(clauses.size)
@@ -53,20 +56,21 @@ object RunSolver {
     // adapt Array to IVecInt
     clauses.foreach(clause => solver.addClause(new VecInt(clause.toArray)))
 
-    var models = SATModelIterator(solver)
-    models.toList
+    SATModelIterator(solver)
   }
 
-  def getAllModelsAsLists(
-    MAXVAR: Int, clauses: Seq[IndexedSeq[Int]]): List[List[Int]] = {
+  def getAllModels(
+    maxvar: Int,
+    clauses: List[Vector[Int]],
+    timeout: Int = 10): List[Vector[Int]] = {
 
-    getAllModels(MAXVAR, clauses).map(c => c.toList)
+    var models = getModelIterator(maxvar, clauses, timeout)
+    models.toList
   }
 
   def main(args: Array[String]) {
 
     val solver: ISolver = SolverFactory.newDefault()
-    solver.setTimeout(1); // 1 sec timeout
 
     // (x1 | -x2) & (x2 | -x1)
 
@@ -74,7 +78,7 @@ object RunSolver {
       Vector(1, -2),
       Vector(2, -1))
 
-    var models = getAllModels(2, clauses)
+    var models = getAllModels(2, clauses, timeout = 1)
 
     if (models.isEmpty) {
       printf("UNSAT!")

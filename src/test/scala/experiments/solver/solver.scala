@@ -16,8 +16,8 @@ class SolverTest extends FunSpec with Matchers {
         Vector(1, -2),
         Vector(2, -1))
 
-      var models = RunSolver.getAllModelsAsLists(2, clauses)
-      var expected = List(List(-1, -2), List(1, 2))
+      var models = SATSolver.getAllModels(2, clauses)
+      var expected = List(Vector(-1, -2), Vector(1, 2))
       
       models should be (expected)
     }
