@@ -71,25 +71,17 @@ case class SATProblemBuilder(n: Int) {
   def buildSATProblem(): List[Vector[Int]] = {
     val clauses = new collection.mutable.ListBuffer[Vector[Lit]]()
 
-    def appendClause(c: Vector[Lit]) {
-      clauses += c
-    }
-
-    def append(cs: Seq[Vector[Lit]]) {
-      for (c <- cs) appendClause(c)
-    }
-
     for (i <- 0 to n - 1)
-      appendClause(atLeastOnePerRow(i))
+      clauses += atLeastOnePerRow(i)
 
     for (j <- 0 to n - 1)
-      appendClause(atLeastOnePerCol(j))
+      clauses += atLeastOnePerCol(j)
 
     for (i <- 0 to n - 1; j <- 0 to n - 1) {
-      append(atMostOnePerRow(i, j))
-      append(atMostOnePerCol(i, j))
-      append(atMostOnePerDiag1(i, j))
-      append(atMostOnePerDiag2(i, j))
+      clauses ++= atMostOnePerRow(i, j)
+      clauses ++= atMostOnePerCol(i, j)
+      clauses ++= atMostOnePerDiag1(i, j)
+      clauses ++= atMostOnePerDiag2(i, j)
     }
 
     val problem: Seq[Vector[Int]] =
