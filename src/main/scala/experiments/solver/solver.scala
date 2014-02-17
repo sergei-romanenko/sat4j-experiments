@@ -68,6 +68,15 @@ object SATSolver {
     models.toList
   }
 
+  def getFirstModel(
+    maxvar: Int,
+    clauses: List[Vector[Int]],
+    timeout: Int = 10): Option[Vector[Int]] = {
+
+    var models = getModelIterator(maxvar, clauses, timeout)
+    if (!models.hasNext) None else Some(models.next)
+  }
+
   def main(args: Array[String]) {
 
     val solver: ISolver = SolverFactory.newDefault()

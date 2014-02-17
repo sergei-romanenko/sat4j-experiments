@@ -105,4 +105,10 @@ case class QSolver(n: Int, timeout: Int = 10) {
 
     for (s <- sat_solutions) yield decodeSolution(s)
   }
+
+  def getFirstSolution(): Option[Vector[Sq]] = {
+    val sat_problem = builder.buildSATProblem()
+    SATSolver.getFirstModel(n * n, sat_problem) map
+      { s => decodeSolution(s) }
+  }
 }
