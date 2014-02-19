@@ -2,10 +2,6 @@ package experiments.queens
 
 import org.scalatest._
 
-//import org.sat4j.specs._
-//
-//import org.sat4j.minisat.SolverFactory
-
 class QBuilder4Test extends FunSpec with Matchers {
   val builder = SATProblemBuilder(4)
   import builder._

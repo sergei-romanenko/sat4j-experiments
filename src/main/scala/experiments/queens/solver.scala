@@ -17,7 +17,7 @@ case class SATProblemBuilder(n: Int) {
 
   def sqFromVar(v: Int): Sq = {
     val r = (v - 1) / n
-    val c = (v - 1) - n * r
+    val c = (v - 1) % n
     (r, c)
   }
 
