@@ -8,4 +8,5 @@ target/
 /.scala_dependencies
 /.externalToolBuilders
 /.worksheet
+*.*~
 *.sc

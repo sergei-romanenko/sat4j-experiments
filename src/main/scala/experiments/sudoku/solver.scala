@@ -69,19 +69,22 @@ case class SATProblemBuilder(n: Int) {
   def atMostOnePerSubgrid(d: Int, i: Int, j: Int): IndexedSeq[Vector[Lit]] =
     atMostOne(d, subgridPs(i - 1, j - 1))
 
-  def buildSATProblem(): List[Vector[Int]] = {
+  def buildSATProblem(cells : Seq[Cell]): List[Vector[Int]] = {
     val clauses = new collection.mutable.ListBuffer[Vector[Lit]]()
 
+    for((r,c,d) <- cells)
+      clauses += Vector(P(r,c,d))
+    
     for (r <- 1 to nn; c <- 1 to nn)
       clauses += atLeastOnePerCell(r, c)
 
-    for (d <- 1 to n; r <- 1 to nn)
+    for (d <- 1 to nn; r <- 1 to nn)
       clauses ++= atMostOnePerRow(d, r)
 
-    for (d <- 1 to n; c <- 1 to nn)
+    for (d <- 1 to nn; c <- 1 to nn)
       clauses ++= atMostOnePerCol(d, c)
 
-    for (d <- 1 to n; i <- 1 to n; j <- 1 to n)
+    for (d <- 1 to nn; i <- 1 to n; j <- 1 to n)
       clauses ++= atMostOnePerSubgrid(d, i, j)
 
     val problem: Seq[Vector[Int]] =
@@ -91,7 +94,10 @@ case class SATProblemBuilder(n: Int) {
   }
 }
 
-case class SudokuSolver(n: Int, timeout: Int = 10) {
+case class SudokuSolver(
+    n: Int,
+    cells : Seq[Cell],
+    timeout: Int = 10) {
 
   val nn = n * n
   val nv = nn * nn * nn
@@ -102,15 +108,15 @@ case class SudokuSolver(n: Int, timeout: Int = 10) {
     for (l <- s; if l > 0) yield builder.cellFromInt(l)
 
   def getSolutions(): List[Vector[Cell]] = {
-    val sat_problem = builder.buildSATProblem()
+    val sat_problem = builder.buildSATProblem(cells)
     val sat_solutions = SATSolver.getAllModels(nv, sat_problem)
 
     for (s <- sat_solutions) yield decodeSolution(s)
   }
 
   def getFirstSolution(): Option[Vector[Cell]] = {
-    val sat_problem = builder.buildSATProblem()
+    val sat_problem = builder.buildSATProblem(cells)
     SATSolver.getFirstModel(nv, sat_problem) map
-      { s => println(s); decodeSolution(s) }
+      { s => decodeSolution(s) }
   }
 }

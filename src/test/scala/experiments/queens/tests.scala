@@ -8,11 +8,11 @@ class QBuilder4Test extends FunSpec with Matchers {
 
   describe("Sq <-> Var & Lit <-> Int") {
     it("P -> Int") {
-      P(1, 2).toVar should be(7)
+      P(1, 2).toInt should be(7)
 
     }
     it("N -> Int") {
-      N(1, 2).toVar should be(-7)
+      N(1, 2).toInt should be(-7)
 
     }
     it("Var -> Sq") {

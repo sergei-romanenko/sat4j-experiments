@@ -11,7 +11,7 @@ import experiments.solver._
 
 case class SATProblemBuilder(n: Int) {
 
-  def varFromSq(i: Int, j: Int): Int = {
+  def intFromSq(i: Int, j: Int): Int = {
     n * i + j + 1
   }
 
@@ -22,15 +22,15 @@ case class SATProblemBuilder(n: Int) {
   }
 
   sealed trait Lit {
-    def toVar: Int
+    def toInt: Int
   }
 
   case class P(i: Int, j: Int) extends Lit {
-    def toVar = varFromSq(i, j)
+    def toInt = intFromSq(i, j)
   }
 
   case class N(i: Int, j: Int) extends Lit {
-    def toVar = -varFromSq(i, j)
+    def toInt = -intFromSq(i, j)
   }
 
   // There is at least one queen per row.
@@ -85,7 +85,7 @@ case class SATProblemBuilder(n: Int) {
     }
 
     val problem: Seq[Vector[Int]] =
-      for (c <- clauses) yield for (l <- c) yield l.toVar
+      for (c <- clauses) yield for (l <- c) yield l.toInt
 
     problem.toList
   }
