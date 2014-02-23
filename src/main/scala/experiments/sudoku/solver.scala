@@ -29,7 +29,7 @@ case class SATProblemBuilder(n: Int) {
     def toInt = -intFromCell(r, c, d)
   }
 
-  // Sets of cells.
+  // Sets of positions.
 
   def rowPs(r: Int): IndexedSeq[(Int, Int)] =
     for (c <- 1 to nn) yield (r, c)
@@ -37,55 +37,88 @@ case class SATProblemBuilder(n: Int) {
   def colPs(c: Int): IndexedSeq[(Int, Int)] =
     for (r <- 1 to nn) yield (r, c)
 
-  // Note that sub-grids are indexed starting at 0.
-
   def subgridPs(i: Int, j: Int): IndexedSeq[(Int, Int)] =
     for (r <- 1 to n; c <- 1 to n)
-      yield (n * i + r, n * j + c)
+      yield (n * (i - 1) + r, n * (j - 1) + c)
 
   def seqPairs[A](s: IndexedSeq[A]): IndexedSeq[(A, A)] = {
     for (i <- 0 until s.size - 1; j <- i + 1 until s.size)
       yield (s(i), s(j))
   }
 
-  def atMostOne(d: Int, ps: IndexedSeq[Pos]) =
+  def atMostOnce(d: Int, ps: IndexedSeq[Pos]): IndexedSeq[Vector[Lit]] =
     for (((r1, c1), (r2, c2)) <- seqPairs(ps))
       yield Vector(N(r1, c1, d), N(r2, c2, d))
+
+  def atLeastOnce(d: Int, ps: IndexedSeq[Pos]): Vector[Lit] =
+    for ((r, c) <- ps.toVector) yield P(r, c, d)
 
   // There is at least one number in each entry.
 
   def atLeastOnePerCell(r: Int, c: Int): Vector[Lit] =
-    for (d <- Vector.range(1, nn + 1)) yield P(r, c, d)
+    for (d <- Vector.range(1, nn + 1))
+      yield P(r, c, d)
 
-  //  Each number appears at most once in each row, column and sub-grid.
+  // There is at most one number in each entry.
 
-  def atMostOnePerRow(d: Int, r: Int): IndexedSeq[Vector[Lit]] =
-    atMostOne(d, rowPs(r))
+  def atMostOnePerCell(r: Int, c: Int): IndexedSeq[Vector[Lit]] =
+    for ((d1, d2) <- seqPairs(Vector.range(1, nn + 1)))
+      yield Vector(N(r, c, d1), N(r, c, d2))
 
-  def atMostOnePerCol(d: Int, c: Int): IndexedSeq[Vector[Lit]] =
-    atMostOne(d, colPs(c))
-
-  // Each number appears at most once in each n*n sub-grid.
-  def atMostOnePerSubgrid(d: Int, i: Int, j: Int): IndexedSeq[Vector[Lit]] =
-    atMostOne(d, subgridPs(i - 1, j - 1))
-
-  def buildSATProblem(cells : Seq[Cell]): List[Vector[Int]] = {
+  def buildSATProblem(cells: Seq[Cell]): List[Vector[Int]] = {
     val clauses = new collection.mutable.ListBuffer[Vector[Lit]]()
 
-    for((r,c,d) <- cells)
-      clauses += Vector(P(r,c,d))
-    
+    // The minimal encoding.
+
+    // Known cells.
+
+    for ((r, c, d) <- cells)
+      clauses += Vector(P(r, c, d))
+
+    // There is at least one number in each entry.
+
     for (r <- 1 to nn; c <- 1 to nn)
       clauses += atLeastOnePerCell(r, c)
 
+    //  Each number appears at most once in each row.
+
     for (d <- 1 to nn; r <- 1 to nn)
-      clauses ++= atMostOnePerRow(d, r)
+      clauses ++= atMostOnce(d, rowPs(r))
+
+    //  Each number appears at most once in each column.
 
     for (d <- 1 to nn; c <- 1 to nn)
-      clauses ++= atMostOnePerCol(d, c)
+      clauses ++= atMostOnce(d, colPs(c))
+
+    // Each number appears at most once in each n*n sub-grid.
 
     for (d <- 1 to nn; i <- 1 to n; j <- 1 to n)
-      clauses ++= atMostOnePerSubgrid(d, i, j)
+      clauses ++= atMostOnce(d, subgridPs(i, j))
+
+    // The extended encoding includes all the clauses of the minimal encoding,
+    // as well as the following constraints.
+
+    // There is at most one number in each entry.
+
+    for (r <- 1 to nn; c <- 1 to nn)
+      clauses ++= atMostOnePerCell(r, c)
+
+    // Each number appears at least once in each row.
+
+    for (d <- 1 to nn; r <- 1 to nn)
+      clauses += atLeastOnce(d, rowPs(r))
+
+    // Each number appears at least once in each column.
+
+    for (d <- 1 to nn; c <- 1 to nn)
+      clauses += atLeastOnce(d, colPs(c))
+
+    // Each number appears at least once in each n*n sub-grid.
+
+    for (d <- 1 to nn; i <- 1 to n; j <- 1 to n)
+      clauses += atLeastOnce(d, subgridPs(i, j))
+
+    // Literals to integers.
 
     val problem: Seq[Vector[Int]] =
       for (c <- clauses) yield for (l <- c) yield l.toInt
@@ -95,13 +128,13 @@ case class SATProblemBuilder(n: Int) {
 }
 
 case class SudokuSolver(
-    n: Int,
-    cells : Seq[Cell],
-    timeout: Int = 10) {
+  n: Int,
+  cells: Seq[Cell],
+  timeout: Int = 10) {
 
   val nn = n * n
   val nv = nn * nn * nn
-  
+
   val builder = SATProblemBuilder(n)
 
   def decodeSolution(s: Vector[Int]): Vector[Cell] =

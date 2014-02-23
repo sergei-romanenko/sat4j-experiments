@@ -34,7 +34,7 @@ class SudokuBuilder3Test extends FunSpec with Matchers {
 
   describe("Sub-grids") {
     it("subgridCells(1 , 2)") {
-      subgridPs(1, 2) should be(Vector(
+      subgridPs(2, 3) should be(Vector(
         (4, 7), (4, 8), (4, 9),
         (5, 7), (5, 8), (5, 9),
         (6, 7), (6, 8), (6, 9)))
@@ -66,8 +66,8 @@ class SudokuBuilder2Test extends FunSpec with Matchers {
       atLeastOnePerCell(2, 3) should be(Vector(
         P(2, 3, 1), P(2, 3, 2), P(2, 3, 3), P(2, 3, 4)))
     }
-    it("atMostOnePerRow(1, 3)") {
-      atMostOnePerRow(1, 3) should be(Vector(
+    it("atMostOnce(1, rowPs(3))") {
+      atMostOnce(1, rowPs(3)) should be(Vector(
         Vector(N(3, 1, 1), N(3, 2, 1)),
         Vector(N(3, 1, 1), N(3, 3, 1)),
         Vector(N(3, 1, 1), N(3, 4, 1)),
@@ -75,8 +75,8 @@ class SudokuBuilder2Test extends FunSpec with Matchers {
         Vector(N(3, 2, 1), N(3, 4, 1)),
         Vector(N(3, 3, 1), N(3, 4, 1))))
     }
-    it("atMostOnePerCol(4, 2)") {
-      atMostOnePerCol(4, 2) should be(Vector(
+    it("atMostOnce(4, colPs(2))") {
+      atMostOnce(4, colPs(2)) should be(Vector(
         Vector(N(1, 2, 4), N(2, 2, 4)),
         Vector(N(1, 2, 4), N(3, 2, 4)),
         Vector(N(1, 2, 4), N(4, 2, 4)),
@@ -84,14 +84,36 @@ class SudokuBuilder2Test extends FunSpec with Matchers {
         Vector(N(2, 2, 4), N(4, 2, 4)),
         Vector(N(3, 2, 4), N(4, 2, 4))))
     }
-    it("atMostOnePerSubgrid(4, 2, 2)") {
-      atMostOnePerSubgrid(4, 2, 2) should be(Vector(
+    it("atMostOnce(4, subgridPs(2, 2))") {
+      atMostOnce(4, subgridPs(2, 2)) should be(Vector(
         Vector(N(3, 3, 4), N(3, 4, 4)),
         Vector(N(3, 3, 4), N(4, 3, 4)),
         Vector(N(3, 3, 4), N(4, 4, 4)),
         Vector(N(3, 4, 4), N(4, 3, 4)),
         Vector(N(3, 4, 4), N(4, 4, 4)),
         Vector(N(4, 3, 4), N(4, 4, 4))))
+    }
+  }
+
+  describe("Constraints for extended encoding") {
+    it("atMostOnePerCell(2, 3)") {
+      atMostOnePerCell(2, 3) should be(Vector(
+        Vector(N(2, 3, 1), N(2, 3, 2)), Vector(N(2, 3, 1), N(2, 3, 3)),
+        Vector(N(2, 3, 1), N(2, 3, 4)),
+        Vector(N(2, 3, 2), N(2, 3, 3)), Vector(N(2, 3, 2), N(2, 3, 4)),
+        Vector(N(2, 3, 3), N(2, 3, 4))))
+    }
+    it("atLeastOnce(2, rowPs(3))") {
+      atLeastOnce(2, rowPs(3)) should be(Vector(
+        P(3, 1, 2), P(3, 2, 2), P(3, 3, 2), P(3, 4, 2)))
+    }
+    it("atLeastOnce(2, colPs(3))") {
+      atLeastOnce(2, colPs(3)) should be(Vector(
+        P(1, 3, 2), P(2, 3, 2), P(3, 3, 2), P(4, 3, 2)))
+    }
+    it("atLeastOnce(4, subgridPs(2, 2))") {
+      atLeastOnce(4, subgridPs(2, 2)) should be(Vector(
+        P(3, 3, 4), P(3, 4, 4), P(4, 3, 4), P(4, 4, 4)))
     }
   }
 }
